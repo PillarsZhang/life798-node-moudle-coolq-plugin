@@ -1,0 +1,29 @@
+{
+  "name": "life798-node-moudle-coolq-plugin",
+  "version": "1.0.1",
+  "description": "使用request模块来对生活798的API进行访问的node-coolq-robot插件",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PillarsZhang/life798-node-moudle-coolq-plugin.git"
+  },
+  "keywords": [
+    "life798",
+    "hot_water",
+    "coolq",
+    "node-coolq-robot",
+    "plugin"
+  ],
+  "author": "PillarsZhang",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/PillarsZhang/life798-node-moudle-coolq-plugin/issues"
+  },
+  "homepage": "https://github.com/PillarsZhang/life798-node-moudle-coolq-plugin#readme",
+  "dependencies": {
+    "request": "^2.88.0"
+  }
+}
