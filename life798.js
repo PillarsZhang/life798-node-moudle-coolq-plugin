@@ -13,9 +13,15 @@ module.exports = class life798 {
 
     //登录
     login(cb){
+        function makeRandId(length) {
+            var text = "";
+            var charList = "abcdef0123456789";
+            for( var i = 0; i < length; i++ ) text += charList.charAt(Math.floor(Math.random() * charList.length));
+            return text;
+        }
         var p = this;
         var options = {
-            url: 'http://sunxie.hnkzy.com:6767/acc/login?pn=' + p.username + '&pwd=' + p.password + '&model=513&eid=14926f09043804fa',
+            url: 'http://sunxie.hnkzy.com:6767/acc/login?pn=' + p.username + '&pwd=' + p.password + '&model=513&eid=' + makeRandId(16),
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
                 'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)'
