@@ -1,6 +1,8 @@
 # life798-node-moudle-coolq-plugin
 ## **使用request模块来对生活798的API进行访问的node-coolq-robot插件**
 ### **A node-coolq-robot plugin that uses request module to access API of life798**
+### **让你在寝室的QQ群里接开水，不需要找卡，反复登录账号**
+### **核心上，这个项目提供了一个接入API的封装模块**
 #### 作者：PillarsZhang
 #### *该插件的开发为非营利个人行为，如有不妥请及时联系本人*
 
