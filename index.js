@@ -2,14 +2,10 @@ import { CQApp, CQMsg } from 'cq-robot'
 var life798 = require('./life798');
 var settings = require('./settings');
 
+//服务对象集合
 var serverList = {};
-/* function group2account(groupNumber){
-    settings.groupList.forEach(function(item, index){
-        if(groupNumber == item.groupNumber) return item.account;
-    })
-    return '';
-} */
 
+//将群号转成对应的群对象
 function group2item(groupNumber){
     var flag = null;
     settings.groupList.forEach(function(item, index){
@@ -21,6 +17,7 @@ function group2item(groupNumber){
     return flag;
 }
 
+//用于监控放水后截止状况，延时递归
 function keepEye(server, p){
     var fromGroup = server.group;
     server.balance(function(stat){
@@ -37,6 +34,16 @@ function keepEye(server, p){
             }
         }
     });
+}
+
+//将机器列表数组转为字符串
+function resultQuery(stat){
+    var tmpStr = '';
+    stat.forEach(function(item,index){
+        tmpStr += '\n' + '[' + (index+1) + '] ' + item;
+    })
+    console.log('OUT - Query:\n' + tmpStr);
+    return tmpStr;
 }
 
 class App extends CQApp {
@@ -97,33 +104,36 @@ class App extends CQApp {
         this.isEnable = false
         return 0
     }
-    async  privateMsg(subType, msgId, fromQQ, msg, font) {
+    async privateMsg(subType, msgId, fromQQ, msg, font) {
         if (msg == "热水"){
             this.CQ.sendPrivateMsg(fromQQ, '暂不线下放水')
             return CQMsg.MSG_INTERCEPT
         }
         return CQMsg.MSG_INTERCEPT;
     }
-    async   groupMsg(subType, msgId, fromGroup, fromQQ, fromAnonymous, msg, font) {
+    async groupMsg(subType, msgId, fromGroup, fromQQ, fromAnonymous, msg, font) {
         var p = this;
         var server = null;
 
         var groupItem = group2item(fromGroup)
         //console.log(fromGroup, groupItem, null);
         var tmpAccount = (groupItem) ? groupItem.account : '';
+
+        //忽略掉不在列表中的群
         if(tmpAccount != ''){
             if (serverList[tmpAccount]){
                 server = serverList[tmpAccount];
             } else {
-                server = 'noAccount';
+                server = 'badAccount';
             }
         } else{
             return CQMsg.MSG_IGNORE;
         }
 
+        //冷水全局初始化
         if (msg == "冷水"){
-            if (server == 'noAccount'){
-                p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
+            if (server == 'badAccount'){
+                p.CQ.sendGroupMsg(fromGroup, `你们的群设置的账户无效`);
                 return CQMsg.MSG_INTERCEPT;
             }
             if (server.group == fromGroup && (server.user == fromQQ || fromQQ == groupItem.master)){
@@ -146,9 +156,10 @@ class App extends CQApp {
             }
         }
 
+        //热水开始
         if (msg == "热水"){
-            if (server == 'noAccount'){
-                p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
+            if (server == 'badAccount'){
+                p.CQ.sendGroupMsg(fromGroup, `你们的群设置的账户无效`);
                 return CQMsg.MSG_INTERCEPT;
             }
             if(server.group == '' && server.user == ''){
@@ -158,15 +169,7 @@ class App extends CQApp {
                 return CQMsg.MSG_INTERCEPT;
             };
 
-            function resultQuery(stat){
-                var tmpStr = '';
-                stat.forEach(function(item,index){
-                    tmpStr += '\n' + '[' + (index+1) + '] ' + item;
-                })
-                console.log('OUT - Query:\n' + tmpStr);
-                return tmpStr;
-            }
-
+            //查询机器，支持一次重登
             server.query(function(stat){
                 if (stat == 'fail') {
                     console.log('ReLogin...');
@@ -198,14 +201,14 @@ class App extends CQApp {
             return CQMsg.MSG_INTERCEPT;
         }
 
-        if (server == 'noAccount') return CQMsg.MSG_IGNORE;
-        if (!(server.group == fromGroup && server.user == fromQQ)){
-            console.log("...")
-            return CQMsg.MSG_IGNORE;
-        }
+        //忽略掉在列表中但设置的账户无效的群
+        if (server == 'badAccount') return CQMsg.MSG_IGNORE;
+        //忽略掉不在控制我的人
+        if (!(server.group == fromGroup && server.user == fromQQ)) return CQMsg.MSG_IGNORE;
         
+        //如果是在放水状态
         if(server.water){
-            //停止
+            //判断为停止关键词
             if (settings.stopWords.indexOf(msg) > 0){
                 server.end(function(stat){
                     console.log('OUT - End:', stat);
@@ -219,6 +222,7 @@ class App extends CQApp {
         } else{
             var lt = msg - 1;
             if (lt >= 0 && lt <= server.favo.length - 1){
+                //判断为输入机器序号
                 p.CQ.sendGroupMsg(fromGroup, `正在开启`);
                 server.favn = lt;
                 server.start(function(stat){
