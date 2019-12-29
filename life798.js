@@ -136,7 +136,7 @@ module.exports = class life798 {
                     console.log('Start: success');
                     cb('success')
                 } else{
-                    console.log('ERROR_Start: ' + info);
+                    console.log('ERROR_Start:', info);
                     cb('fail');
                 }
             }

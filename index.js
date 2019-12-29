@@ -10,18 +10,15 @@ var serverList = {};
     return '';
 } */
 
-function group2item(groupNumber, cb){
-    var flag = true;
-    settings.groupList.every(function(item, index){
+function group2item(groupNumber){
+    var flag = null;
+    settings.groupList.forEach(function(item, index){
         //console.log(groupNumber, item.groupNumber)
         if(groupNumber == item.groupNumber){
-            //console.log(groupNumber, '==' , item.groupNumber)
-            cb(item);
-            flag = false;
-            return false;
+            flag = item;
         }
     })
-    if(flag) cb(null);
+    return flag;
 }
 
 function keepEye(server, p){
@@ -111,130 +108,141 @@ class App extends CQApp {
         var p = this;
         var server = null;
 
-        group2item(fromGroup, function(groupItem){
-            //console.log(fromGroup, groupItem, null);
-            var tmpAccount = (groupItem) ? groupItem.account : '';
-            if(tmpAccount != ''){
-                if (serverList[tmpAccount]){
-                    server = serverList[tmpAccount];
-                } else {
-                    server = 'noAccount';
-                }
-            } else{
-                return CQMsg.MSG_IGNORE;
+        var groupItem = group2item(fromGroup)
+        //console.log(fromGroup, groupItem, null);
+        var tmpAccount = (groupItem) ? groupItem.account : '';
+        if(tmpAccount != ''){
+            if (serverList[tmpAccount]){
+                server = serverList[tmpAccount];
+            } else {
+                server = 'noAccount';
             }
-    
-            if (msg == "冷水"){
-                if (server == 'noAccount'){
-                    p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
-                    return CQMsg.MSG_INTERCEPT;
-                }
-                if (server.group == fromGroup && (server.user == fromQQ || fromQQ == groupItem.master)){
-                    p.CQ.sendGroupMsg(fromGroup, `正在全局初始化，尽可能结束可能开着的机器`);
+        } else{
+            return CQMsg.MSG_IGNORE;
+        }
+
+        if (msg == "冷水"){
+            if (server == 'noAccount'){
+                p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
+                return CQMsg.MSG_INTERCEPT;
+            }
+            if (server.group == fromGroup && (server.user == fromQQ || fromQQ == groupItem.master)){
+                p.CQ.sendGroupMsg(fromGroup, `正在全局初始化，尽可能结束可能开着的机器`);
+                server.login(function(stat){
+                    console.log('OUT - Login:', stat);
+                    server.query(function(stat){
+                        console.log('OUT - Query:\n' + stat);
+                        server.favn = 0;
+                        server.end(function(stat){
+                            console.log('OUT - End:', stat);
+                            p.CQ.sendGroupMsg(fromGroup, `bye bye~`);
+
+                            server.user = '';
+                            server.group = '';
+                        })
+                    })
+                })
+                return CQMsg.MSG_INTERCEPT;
+            }
+        }
+
+        if (msg == "热水"){
+            if (server == 'noAccount'){
+                p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
+                return CQMsg.MSG_INTERCEPT;
+            }
+            if(server.group == '' && server.user == ''){
+                p.CQ.sendGroupMsg(fromGroup, `我在`);
+            } else if(!(server.group == fromGroup && server.user == fromQQ)){
+                p.CQ.sendGroupMsg(fromGroup, `正在被占用`);
+                return CQMsg.MSG_INTERCEPT;
+            };
+
+            function resultQuery(stat){
+                var tmpStr = '';
+                stat.forEach(function(item,index){
+                    tmpStr += '\n' + '[' + (index+1) + '] ' + item;
+                })
+                console.log('OUT - Query:\n' + tmpStr);
+                return tmpStr;
+            }
+
+            server.query(function(stat){
+                if (stat == 'fail') {
+                    console.log('ReLogin...');
                     server.login(function(stat){
                         console.log('OUT - Login:', stat);
                         server.query(function(stat){
-                            console.log('OUT - Query:\n' + stat);
-                            server.favn = 0;
-                            server.end(function(stat){
-                                console.log('OUT - End:', stat);
-                                p.CQ.sendGroupMsg(fromGroup, `bye bye~`);
-
-                                server.user = '';
-                                server.group = '';
-                            })
-                        })
-                    })
-                    return CQMsg.MSG_INTERCEPT;
-                }
-            }
-    
-            if (msg == "热水"){
-                if (server == 'noAccount'){
-                    p.CQ.sendGroupMsg(fromGroup, `你们的群没有设置可用账户`);
-                    return CQMsg.MSG_INTERCEPT;
-                }
-                if(server.group == '' && server.user == ''){
-                    p.CQ.sendGroupMsg(fromGroup, `我在`);
-                } else if(!(server.group == fromGroup && server.user == fromQQ)){
-                    p.CQ.sendGroupMsg(fromGroup, `正在被占用`);
-                    return CQMsg.MSG_INTERCEPT;
-                };
-    
-                function resultQuery(stat){
-                    var tmpStr = '';
-                    stat.forEach(function(item,index){
-                        tmpStr += '\n' + '[' + (index+1) + '] ' + item;
-                    })
-                    console.log('OUT - Query:\n' + tmpStr);
-                    return tmpStr;
-                }
-    
-                server.query(function(stat){
-                    if (stat == 'fail') {
-                        console.log('ReLogin...');
-                        server.login(function(stat){
-                            console.log('OUT - Login:', stat);
-                            server.query(function(stat){
-                                if (stat != 'fail'){
+                            if (stat != 'fail'){
+                                if (stat.length == 0){
+                                    p.CQ.sendGroupMsg(fromGroup, `您好像没有收藏的机器`)
+                                } else{
                                     p.CQ.sendGroupMsg(fromGroup, `登陆成功，请回复机器编号：${resultQuery(stat)}`)
                                     server.group = fromGroup;
                                     server.user = fromQQ;
-                                } else p.CQ.sendGroupMsg(fromGroup, `登陆异常`)
-                            })
+                                }
+                            } else p.CQ.sendGroupMsg(fromGroup, `登陆异常`)
                         })
-                    } else {
-                        console.log('OUT - Query:\n' + stat);
+                    })
+                } else {
+                    console.log('OUT - Query:\n' + stat);
+                    if (stat.length == 0){
+                        p.CQ.sendGroupMsg(fromGroup, `您好像没有收藏的机器`)
+                    } else{
                         p.CQ.sendGroupMsg(fromGroup, `请回复机器编号：${resultQuery(stat)}`)
                         server.group = fromGroup;
                         server.user = fromQQ;
                     }
-                });
-                return CQMsg.MSG_INTERCEPT;
-            }
-    
-            if (server == 'noAccount') return CQMsg.MSG_IGNORE;
-            if (!(server.group == fromGroup && server.user == fromQQ)){
-                console.log("...")
-                return CQMsg.MSG_IGNORE;
-            }
-            
-            if(server.water){
-                //停止
-                if (settings.stopWords.indexOf(msg) > 0){
-                    server.end(function(stat){
-                        console.log('OUT - End:', stat);
-                        p.CQ.sendGroupMsg(fromGroup, `正在结束`);
-                    })
-                } 
-            } else{
-                var lt = msg - 1;
-                if (lt >= 0 && lt <= server.favo.length - 1){
-                    p.CQ.sendGroupMsg(fromGroup, `正在开启`);
-                    server.favn = lt;
-                    server.start(function(stat){
-                        if (stat == 'success'){
-                            console.log('OUT - Start:', stat, server.favo[lt].name);
-                            server.balance(function(stat){
-                                if(stat != 'fail'){
-                                    server.balanceBefore = stat.balance;
-                                };
-                            })
-                            p.CQ.sendGroupMsg(fromGroup, `开启成功：[${server.favo[lt].index+1}] ${server.favo[lt].name}`)
-                            keepEye(server, p);
-                            server.water = true;
-                            p.CQ.sendGroupMsg(fromGroup, '随时喊停');
-                        } else{
-                            console.log('fail');
-                        }
-                    })
-                } else{
-                    console.log('reTry');
-                    p.CQ.sendGroupMsg(fromGroup, `抱歉，我没看懂，您可以输“冷水”`)
                 }
-            }
+            });
             return CQMsg.MSG_INTERCEPT;
-        });
+        }
+
+        if (server == 'noAccount') return CQMsg.MSG_IGNORE;
+        if (!(server.group == fromGroup && server.user == fromQQ)){
+            console.log("...")
+            return CQMsg.MSG_IGNORE;
+        }
+        
+        if(server.water){
+            //停止
+            if (settings.stopWords.indexOf(msg) > 0){
+                server.end(function(stat){
+                    console.log('OUT - End:', stat);
+                    if(stat != 'fail'){
+                        p.CQ.sendGroupMsg(fromGroup, `正在结束`);
+                    } else{
+                        p.CQ.sendGroupMsg(fromGroup, `动作太快，请重试呃`);
+                    }
+                })
+            } 
+        } else{
+            var lt = msg - 1;
+            if (lt >= 0 && lt <= server.favo.length - 1){
+                p.CQ.sendGroupMsg(fromGroup, `正在开启`);
+                server.favn = lt;
+                server.start(function(stat){
+                    if (stat == 'success'){
+                        console.log('OUT - Start:', stat, server.favo[lt].name);
+                        server.balance(function(stat){
+                            if(stat != 'fail'){
+                                server.balanceBefore = stat.balance;
+                            };
+                        })
+                        p.CQ.sendGroupMsg(fromGroup, `开启成功：[${server.favo[lt].index+1}] ${server.favo[lt].name}`)
+                        keepEye(server, p);
+                        server.water = true;
+                        p.CQ.sendGroupMsg(fromGroup, '随时喊停');
+                    } else{
+                        console.log('fail');
+                    }
+                })
+            } else{
+                console.log('reTry');
+                p.CQ.sendGroupMsg(fromGroup, `抱歉，我没看懂，您可以输“冷水”`)
+            }
+        }
+        return CQMsg.MSG_INTERCEPT;
     }
 }
 const app = new App()
