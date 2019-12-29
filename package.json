@@ -1,6 +1,6 @@
 {
   "name": "life798-node-moudle-coolq-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "使用request模块来对生活798的API进行访问的node-coolq-robot插件",
   "main": "index.js",
   "scripts": {
