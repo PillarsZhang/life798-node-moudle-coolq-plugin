@@ -43,7 +43,7 @@ module.exports = class life798 {
                     cb('success');
                 } else{
                     console.log('ERROR_Login:', info);
-                    cb('fail');
+                    cb(info.msg);
                 }
             }
         }

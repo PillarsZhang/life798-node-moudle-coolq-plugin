@@ -72,12 +72,12 @@ class App extends CQApp {
             var server = new life798(item.username, item.password);
             server.login(function(stat){
                 console.log('OUT - Login:', stat);
-                if (stat == 'fail'){
+                if (stat != 'success'){
                     if(!serverList[item.username]){
                         serverList[item.username] = server;
                         settings.groupList.forEach(function(item2, index){
                             if(item2.account == server.username){
-                                p.CQ.sendGroupMsg(item2.groupNumber, `ERROR! 卡账户登录失败!（${item2.account}）`)
+                                p.CQ.sendGroupMsg(item2.groupNumber, `ERROR! 账户登录失败!（${item2.account}）\n${stat}`)
                                 p.CQ.sendGroupMsg(item2.groupNumber, `请检查账户密码后输入“热水”重新激活`)
                             }
                         });
@@ -86,7 +86,7 @@ class App extends CQApp {
                     serverList[item.username] = server;
                     settings.groupList.forEach(function(item2, index){
                         if(item2.account == server.username){
-                            p.CQ.sendGroupMsg(item2.groupNumber, `你们群的卡账户登录成功~（${item2.account}）`)
+                            p.CQ.sendGroupMsg(item2.groupNumber, `账户登录成功~（${item2.account}）`)
                         }
                     });
                 }
@@ -116,14 +116,16 @@ class App extends CQApp {
         var server = null;
 
         var groupItem = group2item(fromGroup)
-        //console.log(fromGroup, groupItem, null);
+
         var tmpAccount = (groupItem) ? groupItem.account : '';
 
+        //console.log(fromGroup, groupItem, tmpAccount);
         //忽略掉不在列表中的群
         if(tmpAccount != ''){
             if (serverList[tmpAccount]){
                 server = serverList[tmpAccount];
             } else {
+                //忽略掉在列表中但设置的账户无效的群
                 server = 'badAccount';
             }
         } else{
@@ -174,18 +176,20 @@ class App extends CQApp {
                 if (stat == 'fail') {
                     console.log('ReLogin...');
                     server.login(function(stat){
-                        console.log('OUT - Login:', stat);
-                        server.query(function(stat){
-                            if (stat != 'fail'){
-                                if (stat.length == 0){
-                                    p.CQ.sendGroupMsg(fromGroup, `您好像没有收藏的机器`)
-                                } else{
-                                    p.CQ.sendGroupMsg(fromGroup, `登陆成功，请回复机器编号：${resultQuery(stat)}`)
-                                    server.group = fromGroup;
-                                    server.user = fromQQ;
-                                }
-                            } else p.CQ.sendGroupMsg(fromGroup, `登陆异常`)
-                        })
+                        if(stat == 'success'){
+                            console.log('OUT - Login:', stat);
+                            server.query(function(stat){
+                                if (stat != 'fail'){
+                                    if (stat.length == 0){
+                                        p.CQ.sendGroupMsg(fromGroup, `您好像没有收藏的机器`)
+                                    } else{
+                                        p.CQ.sendGroupMsg(fromGroup, `登陆成功，请回复机器编号：${resultQuery(stat)}`)
+                                        server.group = fromGroup;
+                                        server.user = fromQQ;
+                                    }
+                                } else p.CQ.sendGroupMsg(fromGroup, `查询异常`)
+                            })
+                        } else p.CQ.sendGroupMsg(fromGroup, `${stat}`)
                     })
                 } else {
                     console.log('OUT - Query:\n' + stat);
