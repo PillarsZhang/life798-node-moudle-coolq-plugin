@@ -9,6 +9,10 @@ module.exports = class life798 {
         this.auth = '';
         this.favo = [];
         this.favn = 0;
+        this.group = '';
+        this.user = '';
+        this.water = false;
+        this.balanceBefore = 0;
     }
 
     //登录
