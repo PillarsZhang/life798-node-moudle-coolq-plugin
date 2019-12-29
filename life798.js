@@ -137,7 +137,7 @@ module.exports = class life798 {
                     cb('success')
                 } else{
                     console.log('ERROR_Start:', info);
-                    cb('fail');
+                    cb(info.msg);
                 }
             }
         }
@@ -165,7 +165,7 @@ module.exports = class life798 {
                     cb('success');
                 } else{
                     console.log('ERROR_End:', info);
-                    cb('fail');
+                    cb(info.msg);
                 }
             }
         }

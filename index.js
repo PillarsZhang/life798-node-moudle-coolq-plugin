@@ -131,7 +131,7 @@ class App extends CQApp {
         }
 
         //冷水全局初始化
-        if (msg == "冷水"){
+        if (msg == "冷水" || msg == "重置"){
             if (server == 'badAccount'){
                 p.CQ.sendGroupMsg(fromGroup, `你们的群设置的账户无效`);
                 return CQMsg.MSG_INTERCEPT;
@@ -212,10 +212,10 @@ class App extends CQApp {
             if (settings.stopWords.indexOf(msg) > 0){
                 server.end(function(stat){
                     console.log('OUT - End:', stat);
-                    if(stat != 'fail'){
+                    if(stat == 'success'){
                         p.CQ.sendGroupMsg(fromGroup, `正在结束`);
                     } else{
-                        p.CQ.sendGroupMsg(fromGroup, `动作太快，请重试呃`);
+                        p.CQ.sendGroupMsg(fromGroup, stat);
                     }
                 })
             } 
@@ -231,6 +231,7 @@ class App extends CQApp {
                         server.balance(function(stat){
                             if(stat != 'fail'){
                                 server.balanceBefore = stat.balance;
+                                console.log('balance-Before:', server.balanceBefore)
                             };
                         })
                         p.CQ.sendGroupMsg(fromGroup, `开启成功：[${server.favo[lt].index+1}] ${server.favo[lt].name}`)
@@ -238,12 +239,14 @@ class App extends CQApp {
                         server.water = true;
                         p.CQ.sendGroupMsg(fromGroup, '随时喊停');
                     } else{
-                        console.log('fail');
+                        //console.log('fail');
+                        p.CQ.sendGroupMsg(fromGroup, stat);
+                        p.CQ.sendGroupMsg(fromGroup, `您可以输“冷水”重置，也可以重新选择机器`)
                     }
                 })
             } else{
                 console.log('reTry');
-                p.CQ.sendGroupMsg(fromGroup, `抱歉，我没看懂，您可以输“冷水”`)
+                p.CQ.sendGroupMsg(fromGroup, `抱歉，我没看懂，您可以输“冷水”重置`)
             }
         }
         return CQMsg.MSG_INTERCEPT;
