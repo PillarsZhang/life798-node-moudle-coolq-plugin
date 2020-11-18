@@ -1,3 +1,5 @@
+**2020-11-18 酷Q停止运营、生活798改版重构，此插件失效不再跟进*
+
 # life798-node-moudle-coolq-plugin
 ## **使用request模块来对生活798的API进行访问的node-coolq-robot插件**
 ### **A node-coolq-robot plugin that uses request module to access API of life798**
